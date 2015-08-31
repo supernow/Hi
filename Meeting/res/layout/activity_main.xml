@@ -1,0 +1,387 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="com.example.meeting.MainActivity" >
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" >
+
+        <Button
+            android:id="@+id/btn_setting3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="开启会议" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+
+            <Button
+                android:id="@+id/policy"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="设置会议模式" />
+
+            <EditText
+                android:id="@+id/policy_edit"
+                android:layout_width="40dp"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+
+            <TextView
+                android:id="@+id/btn_setting1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="加入会议" />
+
+            <CheckBox
+                android:id="@+id/num11"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_bg"
+                android:checked="false"
+                android:text="委员1" >
+            </CheckBox>
+
+            <CheckBox
+                android:id="@+id/num12"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_bg"
+                android:checked="false"
+                android:text="委员2" >
+            </CheckBox>
+
+            <CheckBox
+                android:id="@+id/num13"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_bg"
+                android:checked="false"
+                android:text="委员3" >
+            </CheckBox>
+
+            <CheckBox
+                android:id="@+id/num14"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_bg"
+                android:checked="false"
+                android:text="委员4" >
+            </CheckBox>
+
+            <CheckBox
+                android:id="@+id/num15"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_bg"
+                android:checked="false"
+                android:text="委员5" >
+            </CheckBox>
+
+            <CheckBox
+                android:id="@+id/num16"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_bg"
+                android:checked="false"
+                android:text="委员6" >
+            </CheckBox>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+
+            <TextView
+                android:id="@+id/btn_setting2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="退出会议" />
+
+            <CheckBox
+                android:id="@+id/num21"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_bg"
+                android:checked="false"
+                android:text="委员1" >
+            </CheckBox>
+
+            <CheckBox
+                android:id="@+id/num22"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_bg"
+                android:checked="false"
+                android:text="委员2" >
+            </CheckBox>
+
+            <CheckBox
+                android:id="@+id/num23"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_bg"
+                android:checked="false"
+                android:text="委员3" >
+            </CheckBox>
+
+            <CheckBox
+                android:id="@+id/num24"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_bg"
+                android:checked="false"
+                android:text="委员4" >
+            </CheckBox>
+
+            <CheckBox
+                android:id="@+id/num25"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_bg"
+                android:checked="false"
+                android:text="委员5" >
+            </CheckBox>
+
+            <CheckBox
+                android:id="@+id/num26"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_bg"
+                android:checked="false"
+                android:text="委员6" >
+            </CheckBox>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+
+            <TextView
+                android:id="@+id/btn_setting4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="网络抖动" />
+
+            <CheckBox
+                android:id="@+id/num31"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_bg"
+                android:checked="false"
+                android:text="委员1" >
+            </CheckBox>
+
+            <CheckBox
+                android:id="@+id/num32"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_bg"
+                android:checked="false"
+                android:text="委员2" >
+            </CheckBox>
+
+            <CheckBox
+                android:id="@+id/num33"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_bg"
+                android:checked="false"
+                android:text="委员3" >
+            </CheckBox>
+
+            <CheckBox
+                android:id="@+id/num34"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_bg"
+                android:checked="false"
+                android:text="委员4" >
+            </CheckBox>
+
+            <CheckBox
+                android:id="@+id/num35"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_bg"
+                android:checked="false"
+                android:text="委员5" >
+            </CheckBox>
+
+            <CheckBox
+                android:id="@+id/num36"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_bg"
+                android:checked="false"
+                android:text="委员6" >
+            </CheckBox>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+
+            <TextView
+                android:id="@+id/btn_setting5"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="网络延时" />
+
+            <CheckBox
+                android:id="@+id/num41"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_bg"
+                android:checked="false"
+                android:text="委员1" >
+            </CheckBox>
+
+            <CheckBox
+                android:id="@+id/num42"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_bg"
+                android:checked="false"
+                android:text="委员2" >
+            </CheckBox>
+
+            <CheckBox
+                android:id="@+id/num43"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_bg"
+                android:checked="false"
+                android:text="委员3" >
+            </CheckBox>
+
+            <CheckBox
+                android:id="@+id/num44"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_bg"
+                android:checked="false"
+                android:text="委员4" >
+            </CheckBox>
+
+            <CheckBox
+                android:id="@+id/num45"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_bg"
+                android:checked="false"
+                android:text="委员5" >
+            </CheckBox>
+
+            <CheckBox
+                android:id="@+id/num46"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_bg"
+                android:checked="false"
+                android:text="委员6" >
+            </CheckBox>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="单独录音" />
+
+            <CheckBox
+                android:id="@+id/num51"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_bg"
+                android:checked="false"
+                android:text="委员1" >
+            </CheckBox>
+
+            <CheckBox
+                android:id="@+id/num52"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_bg"
+                android:checked="false"
+                android:text="委员2" >
+            </CheckBox>
+
+            <CheckBox
+                android:id="@+id/num53"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_bg"
+                android:checked="false"
+                android:text="委员3" >
+            </CheckBox>
+
+            <CheckBox
+                android:id="@+id/num54"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_bg"
+                android:checked="false"
+                android:text="委员4" >
+            </CheckBox>
+
+            <CheckBox
+                android:id="@+id/num55"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_bg"
+                android:checked="false"
+                android:text="委员5" >
+            </CheckBox>
+
+            <CheckBox
+                android:id="@+id/num56"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/button_bg"
+                android:checked="false"
+                android:text="委员6" >
+            </CheckBox>
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btn_setting6"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="结束会议" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+
+            <Button
+                android:id="@+id/btn_setting7"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="播放" />
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>

@@ -1,0 +1,378 @@
+#include <stdlib.h>
+#include <pthread.h>
+#include <math.h>
+#include "./webrtc/signal_processing/include/signal_processing_library.h"
+
+#include "./webrtc/interface/echo_cancellation.h"
+#include "./webrtc/interface/noise_suppression.h"
+#include "audio_processing.h"
+#include "agc_manager_direct.h"
+#include "gain_control.h"
+#include "webrtcConf.h"
+#include "webrtcConfPriv.h"
+#include "webrtcLog.h"
+
+#define MIX_CREDTHRESHOLD 0.1
+#define IN_MAXDB		6
+#define OUT_MAXDB		3
+
+static pthread_t 	mixer_proc_id = 0;
+MMixer gMMixer;
+
+static uint64_t MGetCurTime(void *unused){
+	struct timespec ts;
+	if (clock_gettime(CLOCK_MONOTONIC,&ts)<0){
+		//TODO: ERROR
+	}
+	return (ts.tv_sec*1000LL) + ((ts.tv_nsec+500000LL)/1000000LL);
+}
+
+static void MSleepMs(int ms){
+	struct timespec ts;
+	ts.tv_sec=0;
+	ts.tv_nsec=ms*1000000LL;
+	nanosleep(&ts,NULL);
+}
+
+static void *mixer_process_func(void *session)
+{
+	//set_high_prio();
+	int i;
+	MMixer* mmh = (MMixer*)session;
+	PMAudioFrame piframes[MAX_PARTICIPANT];
+	int mutes[MAX_PARTICIPANT]; //连续无声
+	int voice[MAX_PARTICIPANT]; //连续人声
+	int piLevel[MAX_PARTICIPANT];
+
+	memset(piLevel, 0, sizeof(int)*MAX_PARTICIPANT);
+	memset(mutes, 0, sizeof(int)*MAX_PARTICIPANT);
+	memset(voice, 0, sizeof(int)*MAX_PARTICIPANT);
+	mmh->tick = 0;	
+	uint64_t oriT = MGetCurTime(0);
+	while(gMMixer.running)
+	{
+		int pnum = 0;
+		//preprocess
+		for(i = 0; i < MAX_PARTICIPANT; i++)
+		{
+			PMAudioFrame pi = &mmh->participants[i].iframes[mmh->participants[i].rIdx];
+			if(mmh->participants[i].id > 0  
+				&& mmh->participants[i].needmixed
+				&& pi->rwflag == FS_READABLE)
+			{
+				//TODO:时间同步
+				//TODO: EnMSpeechLevel(pi->buf, FRAME_LEN, mmh->participants[i]->enLevel);
+				mmh->participants[i].dbLevel = MCheckLevel(pi->buf, FRAME_LEN);
+				mmh->participants[i].speechProp = MCheckSpeechProp(pi->buf, FRAME_LEN);
+				if(mmh->participants[i].dbLevel > IN_MAXDB)
+				{
+					//TODO: mmh->participants[i].dbLevel = OUT_MAXDB;
+				}
+				
+				//exclude non-speech
+				if(mmh->participants[i].speechProp > MIX_CREDTHRESHOLD)
+				{
+					mutes[i] = 0;
+					voice[i]++;
+				}
+				else
+				{
+					mutes[i]++;
+				}
+				if(!mmh->policy || mutes[i] < 20)
+				{
+					piLevel[i] = mmh->participants[i].dbLevel;
+					piframes[pnum++] = pi;
+				}
+				else
+				{
+					voice[i] = 0;
+				}
+
+				mmh->participants[i].rIdx++;
+				if(mmh->participants[i].rIdx >= PART_BUF_SIZE)
+					mmh->participants[i].rIdx = 0;
+			}
+			else
+			{
+				mmh->participants[i].dbLevel = MIN_DB_LEVEL;
+				mmh->participants[i].speechProp = 0;
+			}
+		}
+		
+		/*n*A +db
+		  6   +16 
+		  5   +14
+		  4   +12
+		  3   +9.5
+		  2   +6
+		*/
+		/*a/b  B-A   +A
+		  4/5 -1.9db +5.1 
+		  3/4 -2.5db +4.8 
+		  2/3 -3.5db +4.4 
+		  1/2 -6db   +3.5 
+		  1/3 -9.5db +2.5 
+		  1/4 -12db  +1.9
+		  1/5 -14db  +1.6
+		  1/6 -16db  +1.3
+		  1/7 -17db  +1.2
+		  1/8 -18db  +1.0
+		*/
+		/*
+		  A = 6db, B = 6db
+		  voice[A] vs. voice[B]
+		*/
+		//process volume overflow
+		//out<3db; in<6db;
+		if(mmh->policy && pnum > 1)
+		{
+			int devol = 0;
+			int overf = 0;
+			int mgain[6] = {0, 6, 10, 12, 14, 16};
+			float dgain[8][2] = {{1.0, 18.0}, {1.5, 14.0}, {2.0, 11.0}, {2.5, 9.5}, 
+				                    {3.5, 6.0}, {4.0, 4.0}, {4.5, 3.5}, {5.0, 2.0}};
+
+			int vMax = voice[0];
+			int vMaxI = 0;
+			int lMax = piLevel[0];
+			int lMaxI = 0;
+			for(i = 1; i < pnum; i++)
+			{
+				if(lMax > piLevel[i])
+				{
+					lMax = piLevel[i];
+					lMaxI = i;
+				}
+			}
+			overf = lMax - mgain[pnum-1];
+			if(overf < 0)
+			{
+				//TODO: LOG
+				overf = 0;
+				for(i = 0; i < pnum; i++)
+				{
+					if(lMaxI != i)
+					{
+						int j = 0;
+						int d = piLevel[i]-lMax;
+						for(j = 1; j < 8; j++)
+						{
+							if(d <= dgain[j-1][1] && d > dgain[j][1])
+							{
+								overf += dgain[j-1][0];
+							}
+						}
+					}
+				}
+			}
+			
+			if(overf > 0)
+			{
+				for(i = 1; i < pnum; i++)
+				{
+					if(vMax < voice[i])
+					{
+						vMax = voice[i];
+						vMaxI = i;
+					}
+				}
+
+				float p = -pow(1.12215,overf*1.0/(pnum-1));
+				for(i = 0; i < pnum; i++)
+				{
+					if(i != vMaxI)
+					{
+						EnMSpeechLevel(piframes[i]->buf, FRAME_LEN, p);
+					}
+				}
+			}
+		}
+		
+		//如果未及时取走语音，跳过当帧混音
+		if(mmh->oframes[mmh->wIdx].rwflag == FS_WRITEABLE)
+		{
+			memset(mmh->oframes[mmh->wIdx].buf, 0, FRAME_LEN);
+			for(i = 0; i < pnum; i++)
+			{
+				//TODO:计算gain
+				int gain = 1;
+				MixTo((signed short*)mmh->oframes[mmh->wIdx].buf, (signed short*)piframes[i]->buf, FRAME_LEN/2, gain);
+				piframes[i]->rwflag = FS_WRITEABLE;
+			}
+			mmh->oframes[mmh->wIdx++].rwflag = FS_READABLE;
+			if(mmh->wIdx >= MIXER_BUF_SIZE)
+				mmh->wIdx = 0;
+		}
+		
+		mmh->tick += FRAME_TMS;
+		int st = mmh->tick + oriT - MGetCurTime(0);
+		if(st > 0)
+			MSleepMs(st);
+	}
+}
+
+MMixerHandle NewMixer(int num)
+{
+	int i, j;
+	MMixer* mm = &gMMixer;
+	
+	for(i = 0; i < MAX_PARTICIPANT; i++)
+	{
+		gMMixer.participants[i].sample = 8000;
+		gMMixer.participants[i].needmixed = 1;
+		gMMixer.participants[i].enLevel = 0;
+		gMMixer.participants[i].dbLevel = MIN_DB_LEVEL;
+		gMMixer.participants[i].speechProp = 0;
+		gMMixer.participants[i].tick = 0;
+		gMMixer.participants[i].id = DEAD_V;
+		for(j = 0; j < PART_BUF_SIZE; i++)
+		{
+			gMMixer.participants[i].iframes[j].rwflag = FS_WRITEABLE;  ////
+		}
+		gMMixer.participants[i].rIdx = 0;
+		gMMixer.participants[i].wIdx = 0;
+	}
+	for(i = 0; i < MIXER_BUF_SIZE; i++)
+	{
+		gMMixer.oframes[i].rwflag = FS_WRITEABLE;
+	}
+	gMMixer.policy = 0;
+	gMMixer.rIdx = 0;
+	gMMixer.wIdx = 0;
+	gMMixer.tick = 0;
+	gMMixer.running = 1;
+
+	int rc = pthread_create(&mixer_proc_id, 0, (void*(*)(void*))mixer_process_func, mm);
+	if(rc)
+	{
+		DelMixer(mm);
+		mm = 0;
+	}
+	InitMConfPriv();
+	return mm;
+}
+
+void DelMixer(MMixerHandle mmh)
+{
+	gMMixer.running = 0;
+	
+	if(mixer_proc_id !=0)
+	{
+		pthread_join(mixer_proc_id,0);
+		mixer_proc_id = 0;
+	}
+	UiniMtConfPriv();
+}
+
+MAudioFrame* GetMixedFrame(MMixerHandle mmh)
+{
+	MAudioFrame* rmf = 0;
+	if(mmh && mmh->oframes[mmh->rIdx].rwflag == FS_READABLE)
+	{
+		rmf = &mmh->oframes[mmh->rIdx++];
+		if(mmh->rIdx >= MIXER_BUF_SIZE)
+			mmh->rIdx = 0;
+	}
+	return rmf;
+}
+
+void RecycleMixedFrame(MMixerHandle mmh, MAudioFrame* af)
+{
+	if(mmh && af)
+	{
+		af->rwflag = FS_WRITEABLE;
+	}
+}
+
+MPartiHandle NewParticipant(MMixerHandle mmh)
+{
+	MPartiHandle mph = 0;
+	if(mmh)
+	{
+		int i;
+		for(i = 0; i < MAX_PARTICIPANT; i++)
+		{
+			if(mmh->participants[i].id == DEAD_V)
+			{
+				mmh->participants[i].id = i+1;
+				mph = &mmh->participants[i];
+				break;
+			}
+		}
+	}
+	
+	return mph;
+}
+
+void DelParticipant(MMixerHandle mmh, MPartiHandle mph)
+{
+	if(mmh && mph)
+	{
+		mph->id = DEAD_V;
+	}
+}
+
+MAudioFrame* ApplyPartiFrame(MPartiHandle mph)
+{
+	MAudioFrame* rmf = 0;
+	if(mph && mph->iframes[mph->wIdx].rwflag == FS_WRITEABLE)
+	{
+		rmf = &mph->iframes[mph->wIdx++];
+		if(mph->wIdx >= PART_BUF_SIZE)
+			mph->wIdx = 0;
+	}
+	
+	return rmf;
+}
+
+void PushPartiFrame(MPartiHandle mph, MAudioFrame* af)
+{
+	if(mph && af)
+	{
+		af->rwflag = FS_READABLE;
+	}
+}
+
+int GetPartiProp(MPartiHandle mph, enum PartiProperty pp)
+{
+	if(mph)
+	{
+		if(pp == 	PARTI_PROPERTY_VAD_LEVEL)
+		{
+			return mph->dbLevel;
+		}
+		else if(pp == PARTI_PROPERTY_SPEECH_PROP)
+		{
+			return mph->speechProp;
+		}
+	}
+	return 0;	
+}
+
+int SetPartiProp(MPartiHandle mph, enum PartiProperty pp, int v)
+{
+	if(mph)
+	{
+		if(pp == 	PARTI_PROPERTY_MIXED)
+		{
+			mph->needmixed = v;
+		}
+		else if(pp == PARTI_PROPERTY_ENLEVEL)
+		{
+			return mph->enLevel = v;
+		}
+	}
+}
+
+int SetMixerProp(MMixerHandle mmh, enum MixerProperty mp, int v)
+{
+	if(mmh)
+	{
+		if(mp == MIXER_PROPERTY_POLICY)
+		{
+			mmh->policy = v;
+		}
+	}
+}
+
